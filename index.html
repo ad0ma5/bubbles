@@ -87,7 +87,7 @@
         }
         normalize_frequency(Hz) {
         	console.log('normalize_frequency',Hz)
-        		var returning = Hz/this.max_val*20000;
+        		var returning = (Hz/this.max_val*10000)+200;
         			if(returning > 2000) returning = 2000;
         			if(returning < 100) returning = 100;
             return returning
