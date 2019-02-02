@@ -16,6 +16,7 @@
             this.sound_ctx = new (window.AudioContext || window.webkitAudioContext)(); // one context per document
             
              this.duration = 0.2//interval/1000
+             this.duration = Math.random()
             //this.color = this.getRandomColor()
             //this.sound_ctx = sound_ctx
             //this.osc = osc
@@ -86,7 +87,7 @@
         }
         normalize_frequency(Hz) {
         	console.log('normalize_frequency',Hz)
-        		var returning = Hz/this.max_val*440;
+        		var returning = Hz/this.max_val*20000;
         			if(returning > 2000) returning = 2000;
         			if(returning < 100) returning = 100;
             return returning
