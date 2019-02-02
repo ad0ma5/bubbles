@@ -12,10 +12,10 @@
             this.c = document.getElementById("bubletron");
             this.ctx = this.c.getContext("2d");
             this.bubleray = [];
-            this.interval = 500;
+            this.interval = 100;
             this.sound_ctx = new (window.AudioContext || window.webkitAudioContext)(); // one context per document
             
-             this.duration = 0.5//interval/1000
+             this.duration = 0.2//interval/1000
             //this.color = this.getRandomColor()
             //this.sound_ctx = sound_ctx
             //this.osc = osc
@@ -45,7 +45,7 @@
         draw() {
             this.clear(); 
             for (var i = 0; i < this.bubleray.length; i++) {
-            		if(this.bubleray[i].r > this.interval/10){
+            		if(this.bubleray[i].r > this.interval*10){
             				this.bubleray.splice(this.bubleray.indexOf(this.bubleray[i]), 1);
             				//continue;
             		}else{
@@ -134,7 +134,7 @@
             this.ctx = ctx;
             this.x = x_b;
             this.y = y_b;
-            this.r = 10
+            this.r = 1
            
             
         }
