@@ -12,11 +12,21 @@
             this.c = document.getElementById("bubletron");
             this.ctx = this.c.getContext("2d");
             this.bubleray = [];
-            this.interval = 50;
+            this.interval = 500;
             this.sound_ctx = new (window.AudioContext || window.webkitAudioContext)(); // one context per document
-            this.osc = this.sound_ctx.createOscillator(); // instantiate an oscillator
-            this.osc.type = 'sine'; // this is the default - also square, sawtooth, triangle
+            
+             this.duration = 0.5//interval/1000
+            //this.color = this.getRandomColor()
+            //this.sound_ctx = sound_ctx
+            //this.osc = osc
+            this.max_val = this.convert_color('#FFFFFF')
+            this.min_val = this.convert_color('#000000')
+            
+            this.soundPlaying = false;
+            this.soundEnabled = true;
             this.setup()
+            
+            
         }
         
         setup() {
@@ -35,12 +45,20 @@
         draw() {
             this.clear(); 
             for (var i = 0; i < this.bubleray.length; i++) {
-                this.bubleray[i].move();
-                for (var e = i + 1; e < this.bubleray.length; e++) {
-                    this.compare_bubble(this.bubleray[i], this.bubleray[e])
-                
-                };
-                this.bubleray[i].show();
+            		if(this.bubleray[i].r > this.interval/10){
+            				this.bubleray.splice(this.bubleray.indexOf(this.bubleray[i]), 1);
+            				//continue;
+            		}else{
+				            this.bubleray[i].move();
+				            for (var e = i + 1; e < this.bubleray.length; e++) {
+				                this.compare_bubble(this.bubleray[i], this.bubleray[e])
+				            
+				            };
+				            this.bubleray[i].color = this.getRandomColor()
+								    var Hz = this.convert_color(this.bubleray[i].color)
+								    this.playSound(Hz)
+				            this.bubleray[i].show();
+                }
                 
            };
            console.log(this.bubleray)
@@ -57,21 +75,6 @@
         clear() {
             this.ctx.clearRect(0, 0, this.c.width, this.c.height);
         }
-    }
-    
-    class Bubble {
-        constructor(canvas, ctx, x_b, y_b, interval, sound_ctx, osc) {
-            this.canvas = canvas;
-            this.ctx = ctx;
-            this.x = x_b;
-            this.y = y_b;
-            this.r = 10
-            this.duration = 0.02//interval/1000
-            this.color = this.getRandomColor()
-            this.sound_ctx = sound_ctx
-            this.osc = osc
-            this.max_val = this.convert_color('#FFFFFF')
-        }
         
         getRandomColor() {
           var letters = '0123456789ABCDEF';
@@ -81,24 +84,68 @@
           }
           return color;
         }
-        
         normalize_frequency(Hz) {
-            return Hz/this.max_val * 22000
+        	console.log('normalize_frequency',Hz)
+        		var returning = Hz/this.max_val*440;
+        			if(returning > 2000) returning = 2000;
+        			if(returning < 100) returning = 100;
+            return returning
         }
-        
         playSound(Hz) {
-            console.log('Current_log_hz: ', this.normalize_frequency(Hz), this.max_val, Hz)
+        		if(this.soundPlaying && this.soundEnabled){
+        		 		//this.osc.stop();
+        		 		this.soundPlaying = false;
+        		 }
+        		 
+        		 this.osc = this.sound_ctx.createOscillator(); // instantiate an oscillator
+            this.osc.type = 'sine'; // this is the default - also square, sawtooth, triangle
+            
+        		//if(this.soundPlaying) return false;
+            //console.log('Current_log_hz: ', this.normalize_frequency(Hz), this.max_val, Hz)
             this.osc.frequency.value = this.normalize_frequency(Hz); // Hz
             this.osc.connect(this.sound_ctx.destination); // connect it to the destination
-            this.osc.start(); // start the oscillator
-            this.osc.stop(context.currentTime + this.duration); // stop 2 seconds after the current time
+            //console.log(this.osc);
+            //this.osc.addEventListener('canplaythrough', function() {
+								//this.soundPlaying = false;
+								//this.soundEnabled = true;
+						//}, false);
+						
+						//if(!this.soundPlaying && this.soundEnabled){
+							console.log('start!!');
+		          this.osc.start(); // start the oscillator
+		          //this.soundPlaying = true;
+		          this.osc.stop(this.sound_ctx.currentTime + this.duration); 
+		          // stop 2 seconds after the current time					
+		          console.log('stop!!');
+		        //}
         }
-        
         convert_color(color) {
-            console.log((parseInt(color.substr(1), 16) << 8) / 256, color)
-            return (parseInt(color.substr(1), 16) << 8) / 256;
+            //console.log("convert_color",((parseInt(color.substr(1), 16) << 8) / 256), color)
+            console.log("convert_color",parseInt(color.substr(1), 16), color)
+            //return (parseInt(color.substr(1), 16) << 8) / 256;
+            return parseInt(color.substr(1), 16);
             
         }
+    }
+    
+    class Bubble {
+        constructor(canvas, ctx, x_b, y_b, interval, sound_ctx, osc) {
+            this.canvas = canvas;
+            this.ctx = ctx;
+            this.x = x_b;
+            this.y = y_b;
+            this.r = 10
+           
+            
+        }
+        
+        
+        
+        
+        
+        
+        
+        
         
         move() {
             var sign = Math.random() > 0.5 ? 1 : -1;
@@ -118,10 +165,7 @@
         }
         
         show() {
-            this.ellipse(this.x, this.y);
-            this.color = this.getRandomColor()
-            var Hz = this.convert_color(this.color)
-            //this.playSound(Hz)
+            this.ellipse(this.x, this.y);            
             this.r++
         }
         
