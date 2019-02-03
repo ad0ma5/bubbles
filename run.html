@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Canvas tutorial</title>
+    <script type="text/javascript">
+    
+    var setup = function() { return new Bubble_Machine()};
+    
+    class Bubble_Machine {
+        constructor() {
+            this.c = document.getElementById("bubletron");
+            this.ctx = this.c.getContext("2d");
+            this.bubleray = [];
+            //this.Hz_ray = [];
+            this.interval = 100;
+            this.sound_type = ['sine', 'square', 'sawtooth', 'triangle'];
+            this.sound_ctx = new (window.AudioContext || window.webkitAudioContext)(); // one context per document
+            this.setup()
+        }
+        
+        setup() {
+            this.c.addEventListener("click", this.create_bubble_click.bind(this));
+            setInterval(this.draw.bind(this), this.interval);
+        }
+        
+        create_bubble_click(event) {
+            this.create_bubble(event.x, event.y)
+        }
+        
+        create_bubble(x, y) {
+            this.bubleray[this.bubleray.length] = new Bubble(this.c, this.ctx, x, y, this.interval, this.sound_ctx, this.osc);
+        }
+        
+        draw() {
+            this.clear();
+            for (var i = 0; i < this.bubleray.length; i++) {
+                this.bubleray[i].move();
+                for (var e = i + 1; e < this.bubleray.length; e++) {
+                    this.compare_bubble(this.bubleray[i], this.bubleray[e])
+                };
+                this.bubleray[i].show();
+                //this.make_Hz_ray();
+                //const reducer = (accumulator, currentValue) => accumulator + currentValue;
+                //this.avg_Hz = this.Hz_ray.reduce(reducer) / this.Hz_ray.length
+                this.playSound(this.bubleray[i].Hz)
+           };
+        }
+        
+        //make_Hz_ray() {
+        //    for (var i = 0; i < this.bubleray.length; i++) {
+        //        this.Hz_ray.push(this.bubleray[i].Hz)
+        //    };
+        //}
+        
+        compare_bubble(b1, b2) {
+            var distance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
+            var rad_dist = b1.r + b2.r;
+            if (rad_dist >= distance) {
+                this.bubleray.splice(this.bubleray.indexOf(b1), 1);
+            };
+        }
+        
+        playSound(Hz) {
+            this.osc = this.sound_ctx.createOscillator();
+            this.osc.type = this.sound_type[Math.floor(Math.random() * 4)]
+            this.osc.frequency.value = Hz; // Hz
+            this.osc.connect(this.sound_ctx.destination); // connect it to the destination
+            var interval_s = this.interval / 1000;
+            var obj_count = this.bubleray.length;
+            var duration = (interval_s / obj_count * 2) * Math.random();
+            console.log(duration)
+            this.osc.start(); // start the oscillator
+            this.osc.stop(this.sound_ctx.currentTime + duration); 
+        }
+        
+        clear() {
+            //this.Hz_ray = []
+            this.ctx.clearRect(0, 0, this.c.width, this.c.height);
+        }
+    }
+    
+    class Bubble {
+        constructor(canvas, ctx, x_b, y_b, interval, sound_ctx, osc) {
+            this.canvas = canvas;
+            this.ctx = ctx;
+            this.x = x_b;
+            this.y = y_b;
+            this.r = 10
+            this.color = this.getRandomColor()
+            this.total_colors = Math.pow(256, 3)
+            this.Hz = 3000
+        }
+        
+        getRandomColor() {
+          var letters = '0123456789ABCDEF';
+          var color = '#';
+          for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+          }
+          return color;
+        }
+        
+        convert_color(color) {
+            var ratio = parseInt(color.substr(1), 16) / this.total_colors;
+            var Hz_range = 10000;
+            var res = Math.round(ratio * Hz_range) + 200;
+            return res;
+        }
+        
+        move() {
+            var sign = Math.random() > 0.5 ? 1 : -1;
+            var value = 5 * Math.random();
+            this.x = this.x + sign * value;
+            sign = Math.random() > 0.5 ? 1 : -1;
+            value = 5 * Math.random();
+            this.y = this.y + sign * value;
+        }
+        
+        ellipse(x, y) {
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, this.r, 0, 2 * Math.PI);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+            this.ctx.stroke();
+        }
+        
+        show() {
+            this.ellipse(this.x, this.y);
+            this.color = this.getRandomColor()
+            this.Hz = this.convert_color(this.color)
+            this.r++
+        }
+    }
+
+    </script>
+    <style type="text/css">
+      canvas { border: 1px solid black;}
+    </style>
+  </head>
+  <body onload="setup()">
+    <div>
+        <canvas id="bubletron" width="900" height="800"></canvas>
+    </div>
+  </body>
+</html>
