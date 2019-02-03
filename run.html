@@ -2,26 +2,37 @@
 <html>
   <head>
     <meta charset="utf-8"/>
-    <title>Canvas tutorial</title>
+    <title>Bubbletatic Ecstasy:)</title>
     <script type="text/javascript">
     
-    var setup = function() { return new Bubble_Machine()};
+    var b_machine_inst = function() {return new Bubble_Machine()};
     
     class Bubble_Machine {
         constructor() {
             this.c = document.getElementById("bubletron");
+            this.b = document.getElementById("kill");
+            this.s_i = document.getElementById("interval_range");
             this.ctx = this.c.getContext("2d");
             this.bubleray = [];
-            //this.Hz_ray = [];
-            this.interval = 100;
+            this.interval = parseInt(this.s_i.value, 10);
+            this.max_r = 500;
             this.sound_type = ['sine', 'square', 'sawtooth', 'triangle'];
-            this.sound_ctx = new (window.AudioContext || window.webkitAudioContext)(); // one context per document
+            this.sound_ctx = new (window.AudioContext || window.webkitAudioContext)();
+            // one sound_ctx context per document
             this.setup()
         }
         
         setup() {
             this.c.addEventListener("click", this.create_bubble_click.bind(this));
-            setInterval(this.draw.bind(this), this.interval);
+            this.b.addEventListener("click", this.kill.bind(this));
+            this.s_i.oninput = this.interval_slider.bind(this);
+            this.launch = setInterval(this.draw.bind(this), this.interval);
+        }
+        
+        interval_slider() {
+            this.interval = parseInt(this.s_i.value, 10);
+            clearInterval(this.launch);
+            this.launch = setInterval(this.draw.bind(this), this.interval);
         }
         
         create_bubble_click(event) {
@@ -35,23 +46,18 @@
         draw() {
             this.clear();
             for (var i = 0; i < this.bubleray.length; i++) {
-                this.bubleray[i].move();
-                for (var e = i + 1; e < this.bubleray.length; e++) {
-                    this.compare_bubble(this.bubleray[i], this.bubleray[e])
+                if(this.bubleray[i].r > this.max_r){
+                    this.bubleray.splice(this.bubleray.indexOf(this.bubleray[i]), 1);
+                }else {
+                    this.bubleray[i].move();
+                    for (var e = i + 1; e < this.bubleray.length; e++) {
+                        this.compare_bubble(this.bubleray[i], this.bubleray[e])
+                    };
+                    this.bubleray[i].show();
+                    this.playSound(this.bubleray[i].Hz)
                 };
-                this.bubleray[i].show();
-                //this.make_Hz_ray();
-                //const reducer = (accumulator, currentValue) => accumulator + currentValue;
-                //this.avg_Hz = this.Hz_ray.reduce(reducer) / this.Hz_ray.length
-                this.playSound(this.bubleray[i].Hz)
-           };
+            };
         }
-        
-        //make_Hz_ray() {
-        //    for (var i = 0; i < this.bubleray.length; i++) {
-        //        this.Hz_ray.push(this.bubleray[i].Hz)
-        //    };
-        //}
         
         compare_bubble(b1, b2) {
             var distance = Math.sqrt(Math.pow(b2.x - b1.x, 2) + Math.pow(b2.y - b1.y, 2));
@@ -64,19 +70,24 @@
         playSound(Hz) {
             this.osc = this.sound_ctx.createOscillator();
             this.osc.type = this.sound_type[Math.floor(Math.random() * 4)]
-            this.osc.frequency.value = Hz; // Hz
+            this.osc.frequency.value = Hz;
             this.osc.connect(this.sound_ctx.destination); // connect it to the destination
             var interval_s = this.interval / 1000;
             var obj_count = this.bubleray.length;
-            var duration = (interval_s / obj_count * 2) * Math.random();
+            var uppa = interval_s * Math.random();
+            var lowa = (Math.pow(obj_count, 2) - (obj_count - 1)) / 2;
+            var duration = uppa / lowa;
             console.log(duration)
             this.osc.start(); // start the oscillator
             this.osc.stop(this.sound_ctx.currentTime + duration); 
         }
         
         clear() {
-            //this.Hz_ray = []
             this.ctx.clearRect(0, 0, this.c.width, this.c.height);
+        }
+        
+        kill() {
+            this.bubleray = [];
         }
     }
     
@@ -103,7 +114,7 @@
         
         convert_color(color) {
             var ratio = parseInt(color.substr(1), 16) / this.total_colors;
-            var Hz_range = 10000;
+            var Hz_range = 9000;
             var res = Math.round(ratio * Hz_range) + 200;
             return res;
         }
@@ -138,9 +149,15 @@
       canvas { border: 1px solid black;}
     </style>
   </head>
-  <body onload="setup()">
+  <body onload="b_machine_inst()">
     <div>
         <canvas id="bubletron" width="900" height="800"></canvas>
+    </div>
+    <div>
+        <button type="button" id='kill'>Kill Noise</button>
+    </div>
+    <div class="slidecontainer">
+        <input type="range" min="50" max="1000" value="100" class="slider" id="interval_range">
     </div>
   </body>
 </html>
